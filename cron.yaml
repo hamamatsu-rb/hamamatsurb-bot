@@ -1,0 +1,4 @@
+cron:
+- description: Update cron job every a minute.
+  url: /cron
+  schedule: every 1 minutes
