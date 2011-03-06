@@ -1,3 +1,5 @@
 .DS_Store
+app/*.pyc
+tweepy/*.pyc
 app/consumer.py
 app/token.py
