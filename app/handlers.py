@@ -21,8 +21,8 @@ class UpdateHandler(webapp.RequestHandler):
       auth = tweepy.OAuthHandler(consumer.KEY, consumer.SECRET)
       auth.set_access_token(token.KEY, token.SECRET)
       self.api = tweepy.API(auth)
-      self.response.out.write("Success!")
       self.status_update()
+      self.response.out.write("Success!")
     except Exception, e:
       logging.error(e.message)
       self.response.out.write("Error!")
