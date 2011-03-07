@@ -1,3 +1,5 @@
+#-*- coding: utf-8 -*-
+
 from google.appengine.ext import webapp
 from google.appengine.api import taskqueue, memcache
 
@@ -7,7 +9,7 @@ class CronHandler(webapp.RequestHandler):
   def get(self):
     """
     GET /cron
-    Execute added tweets every a minute.
+    Executes every a minute.
     """
     taskqueue.add(url='/update')
     self.response.out.write("Call update worker.")
@@ -21,15 +23,15 @@ class UpdateHandler(webapp.RequestHandler):
       auth = tweepy.OAuthHandler(consumer.KEY, consumer.SECRET)
       auth.set_access_token(token.KEY, token.SECRET)
       self.api = tweepy.API(auth)
-      self.status_update()
+      self.execute()
       self.response.out.write("Success!")
     except Exception, e:
       logging.error(e.message)
       self.response.out.write("Error!")
   
-  def status_update(self):
+  def execute(self):
     """
-    Execute status update by mentions that tweeted after last update.
+    Execute status update or subscribe user by mentions that tweeted after last update.
     """
     status_id = None
     try:
@@ -38,7 +40,10 @@ class UpdateHandler(webapp.RequestHandler):
       mentions.reverse()
       for status in mentions:
         if not (last_update_id and status.id <= last_update_id):
-          status_id = self.update_status(status)
+          if status.text.strip() == u'@hamamatsurb subscribe':
+            status_id = self.subscribe_user(status)
+          else:
+            status_id = self.update_status(status)
       if status_id:
         memcache.set('last_update_id', status_id)
     except Exception, e:
@@ -73,7 +78,22 @@ class UpdateHandler(webapp.RequestHandler):
     if re.match('@', text):
       text = ".%s" % text
     try:
-      self.api.update_status(text)
-      return status.id
+      update = self.api.update_status(text)
+      return update.id
+    except Exception, e:
+      raise e
+
+  def subscribe_user(self, status):
+    """
+    Follow user and add user to list.
+    """
+    screen_name = status.user.screen_name
+    try:
+      if not self.api.exists_friendship('hamamatsurb', screen_name):
+        self.api.create_friendship(screen_name)
+        self.api.add_list_member('hamamatsu-rb', status.user.id)
+        text = u".@%s さんがHamamatsu.rbに参加しました！" % screen_name
+        update = self.api.update_status(text)
+        return update.id
     except Exception, e:
       raise e
