@@ -26,7 +26,7 @@ class UpdateHandler(webapp.RequestHandler):
       self.execute()
       self.response.out.write("Success!")
     except Exception, e:
-      logging.error(e.message)
+      logging.error(e)
       self.response.out.write("Error!")
   
   def execute(self):
@@ -49,7 +49,7 @@ class UpdateHandler(webapp.RequestHandler):
     except Exception, e:
       if status_id:
         memcache.set('last_update_id', status_id)
-      logging.error(e.message)
+      logging.error(e)
       
   def last_update_id(self):
     """
@@ -72,14 +72,18 @@ class UpdateHandler(webapp.RequestHandler):
     """
     Update status with a hashtag and user screen name.
     """
+    if status.source.startswith('GitHub'):
+      return None
     text = status.text.replace('@hamamatsurb ', '')
     tag = '#hamamatsurb' if not re.search(r'#hamamatsurb', text) else ''
     text = "%s %s - @%s" % (text, tag, status.user.screen_name)
     if re.match('@', text):
       text = ".%s" % text
+    if 140 < len(text):
+      text = "%s..." % text[0:140-3]
     try:
-      update = self.api.update_status(text)
-      return update.id
+      self.api.update_status(text)
+      return status.id
     except Exception, e:
       raise e
 
@@ -93,7 +97,8 @@ class UpdateHandler(webapp.RequestHandler):
         self.api.create_friendship(screen_name)
         self.api.add_list_member('hamamatsu-rb', status.user.id)
         text = u".@%s さんがHamamatsu.rbに参加しました！" % screen_name
-        update = self.api.update_status(text)
-        return update.id
+        self.api.update_status(text)
+        logging.info(text)
+        return status.id
     except Exception, e:
       raise e
