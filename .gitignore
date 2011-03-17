@@ -1,5 +1,6 @@
 .DS_Store
-app/*.pyc
-tweepy/*.pyc
+*.pyc
 app/consumer.py
 app/token.py
+tests/test_consumer.py
+tests/test_token.py
