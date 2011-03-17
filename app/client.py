@@ -22,14 +22,13 @@ class Client(object):
     self.current_user = self.api.me()
     return self.current_user
   
-  def get_last_update_id(self):
+  def get_last_update_id(self, consumer_name):
     """
-    このクライアントが投稿した最後のツイートのIDを取得する
+    指定したクライアントが投稿した最後のツイートのIDを取得する
     """
     statuses = self.api.user_timeline()
-    regex = re.compile(r'hamamatsu', re.IGNORECASE)
-    for status in  statuses:
-      if regex.match(status.source):
+    for status in statuses:
+      if status.source == consumer_name:
         return status.id
     return None
 
@@ -63,10 +62,24 @@ class Client(object):
     受け取ったメッセージをBotが投稿するテキストに変換する。
     """
     pattern = "@%s" % self.get_current_user().screen_name
-    return message.text.replace(pattern, '').strip()
+    text = message.text.replace(pattern, '').strip()
+    return "%s #%s - @%s" % (text, self.get_current_user().screen_name, message.user.screen_name)
     
   def update_status(self, text):
     """
     Twitterにテキストを投稿する。
     """
-    pass
+    return self.api.update_status(text)
+    
+  def subscribe_user(self, user, list_name=None):
+    """
+    ユーザーをフォローしていなければフォローし、リストが指定されていたらリストに追加する。
+    """
+    if not self.api.exists_friendship(self.get_current_user().screen_name, user.screen_name):
+      self.api.create_friendship(user.screen_name)
+      if list_name:
+        self.api.add_list_member(list_name, user.id)
+      text = u".@%s さんが%sに参加しました！" % (user.screen_name, self.get_current_user().name)
+      return  self.update_status(text)
+    else:
+      return None

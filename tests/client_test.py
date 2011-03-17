@@ -23,7 +23,7 @@ class ClientTest(unittest.TestCase):
     assert user.screen_name is not None
         
   def test_get_last_update_id(self):
-    assert self.client.get_last_update_id() is None
+    assert self.client.get_last_update_id('Echofon') is not None
     
   def test_get_last_messages(self):
     screen_name = self._current_user_name()
@@ -58,11 +58,20 @@ class ClientTest(unittest.TestCase):
     screen_name = self._current_user_name()
     message = self._create_mock()
     message.text = "%s Hello!" % screen_name
-    expected = 'Hello! #%s - @' % (screen_name, message.user.screen_name)
+    expected = 'Hello! #%s - @%s' % (self.client.get_current_user().screen_name, message.user.screen_name)
     assert self.client.convert_message(message) == expected
     message.text = "%s Hello! %s" % (screen_name, screen_name)
     assert self.client.convert_message(message) == expected
     
+  def test_update_status(self):
+    import datetime
+    status = self.client.update_status("Hello! %s" % str(datetime.datetime.now()))
+    assert status is not None
+  
+  def test_subscribe_user(self):
+    message = self._create_mock()
+    status = self.client.subscribe_user(message.user)
+  
   def _current_user_name(self):
     user = self.client.get_current_user()
     return "@%s" % user.screen_name
@@ -70,10 +79,12 @@ class ClientTest(unittest.TestCase):
   def _create_mock(self):
       class User:
         def _init__(self):
-          self.screen_name = 'bob'
+          pass
       class Mock:
         def __init__(self):
-          self.user = User()
+          user = User()
+          user.screen_name = 'hamamatsurb'
+          self.user = user
           self.text = ''
       return Mock()
 
