@@ -45,7 +45,7 @@ class Client(object):
     mentions.reverse()
     for mention in mentions:
       if mention.text.startswith(screen_name):
-        if not (last_update_id and status.id <= last_update_id):
+        if not (last_update_id and mention.id <= last_update_id):
           if self.ignore_sources.count(mention.source) == 0:
             messages.append(mention)
     return messages
