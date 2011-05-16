@@ -63,7 +63,10 @@ class Client(object):
     """
     pattern = "@%s" % self.get_current_user().screen_name
     text = message.text.replace(pattern, '').strip()
-    return "%s #%s - @%s" % (text, self.get_current_user().screen_name, message.user.screen_name)
+    sign = " #%s - @%s" % (self.get_current_user().screen_name, message.user.screen_name)
+    if 140 < len(text + sign):
+      text = "%s..." % text[0:(140 - len(sign) -3)]
+    return "%s%s" % (text, sign)
     
   def update_status(self, text):
     """
