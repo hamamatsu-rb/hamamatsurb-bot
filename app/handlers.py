@@ -32,7 +32,6 @@ class UpdateHandler(webapp.RequestHandler):
     """
     status = None
     try:
-      # mentions = self.api.mentions()
       last_update_id = self.last_update_id()
       messages = self.client.get_last_messages(last_update_id)
       for message in messages:
@@ -41,7 +40,8 @@ class UpdateHandler(webapp.RequestHandler):
         else:
           text = self.client.convert_message(message)
           status = self.client.update_status(text)
-        memcache.set('last_update_id', status.id)
+        if status:
+          memcache.set('last_update_id', status.id)
     except Exception, e:
       if status:
         memcache.set('last_update_id', status.id)
